@@ -35,26 +35,38 @@ body {
   align-items: center;
   min-height: 0;
   overflow: hidden;
+  /* Dégradé plus doux : moins de “coupure” sur les bords */
   mask-image: linear-gradient(
     90deg,
-    transparent 0%,
-    #000 8%,
-    #000 92%,
-    transparent 100%
+    hsl(0 0% 0% / 0) 0%,
+    hsl(0 0% 0% / 0.35) 2%,
+    #000 5%,
+    #000 95%,
+    hsl(0 0% 0% / 0.35) 98%,
+    hsl(0 0% 0% / 0) 100%
   );
   -webkit-mask-image: linear-gradient(
     90deg,
-    transparent 0%,
-    #000 8%,
-    #000 92%,
-    transparent 100%
+    hsl(0 0% 0% / 0) 0%,
+    hsl(0 0% 0% / 0.35) 2%,
+    #000 5%,
+    #000 95%,
+    hsl(0 0% 0% / 0.35) 98%,
+    hsl(0 0% 0% / 0) 100%
   );
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
 }
 
 .led-track {
-  display: flex;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0;
   width: max-content;
   will-change: transform;
+  backface-visibility: hidden;
 }
 
 .led-track[data-direction="right"] {
@@ -65,7 +77,11 @@ body {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 0 0.15em;
+  box-sizing: content-box;
+  /* Un seul espace à droite : jointure propre entre les deux copies */
+  padding: 0;
+  padding-inline-end: clamp(2rem, 12vw, 6rem);
+  padding-inline-start: 0;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -80,10 +96,11 @@ body {
 
 @keyframes led-marquee {
   from {
-    transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0.01px);
   }
   to {
-    transform: translate3d(-50%, 0, 0);
+    /* Défini en JS (--led-marquee-shift) pour éviter les sauts d’arrondi ; repli -50% */
+    transform: translate3d(var(--led-marquee-shift, -50%), 0, 0.01px);
   }
 }
 

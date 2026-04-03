@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -46,6 +47,8 @@ export default function LedBannerApp() {
   );
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const segmentRef = useRef<HTMLSpanElement>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [draft, setDraft] = useState<BannerParams>(fromUrl);
   const [toast, setToast] = useState<string | null>(null);
@@ -152,6 +155,28 @@ export default function LedBannerApp() {
 
   const inExpandedView = nativeFs || immersive;
   const displayText = `${fromUrl.text}   •   `;
+
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    const seg = segmentRef.current;
+    if (!track || !seg) return;
+
+    const syncShift = () => {
+      const w = seg.getBoundingClientRect().width;
+      if (w > 0) track.style.setProperty("--led-marquee-shift", `-${w}px`);
+    };
+
+    syncShift();
+
+    const ro = new ResizeObserver(syncShift);
+    ro.observe(seg);
+
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      void document.fonts.ready.then(syncShift);
+    }
+
+    return () => ro.disconnect();
+  }, [displayText, fromUrl.fontSize]);
   const speedSlider = draft.speedSec;
   const sizeVw = parseVwFromFontSize(draft.fontSize, 11);
 
@@ -171,11 +196,12 @@ export default function LedBannerApp() {
       >
         <div className="led-stage">
           <div
+            ref={trackRef}
             className="led-track led-track-animated"
             data-direction={fromUrl.direction}
             style={{ fontSize: fromUrl.fontSize }}
           >
-            <span className="led-chunk" aria-hidden>
+            <span ref={segmentRef} className="led-chunk" aria-hidden>
               {displayText}
             </span>
             <span className="led-chunk">{displayText}</span>
