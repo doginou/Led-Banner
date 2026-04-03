@@ -156,7 +156,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
-  z-index: 10;
+  z-index: 2147483645;
 }
 
 .led-toast[data-visible="true"] {
@@ -173,7 +173,7 @@ body {
   padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
   transform: translateY(100%);
   transition: transform 0.28s ease;
-  z-index: 20;
+  z-index: 2147483641;
   overflow-y: auto;
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
 }
@@ -189,7 +189,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.28s ease;
-  z-index: 19;
+  z-index: 2147483640;
 }
 
 .led-panel-backdrop[data-open="true"] {
@@ -212,7 +212,7 @@ body {
   opacity: 0.75;
 }
 
-.led-field input,
+.led-field input:not([type="range"]),
 .led-select {
   width: 100%;
   padding: 0.65rem 0.75rem;
@@ -222,6 +222,25 @@ body {
   color: color-mix(in srgb, var(--banner-color, #00ff88) 95%, #fff);
   font-family: inherit;
   font-size: 0.9rem;
+}
+
+.led-range {
+  width: 100%;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  accent-color: var(--banner-color, #00ff88);
+  background: transparent;
+}
+
+.led-range-value {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+  text-transform: none;
 }
 
 .led-select {
@@ -247,4 +266,127 @@ body {
   font-size: 0.8rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
+}
+
+.led-presets {
+  margin-bottom: 1rem;
+  border: 1px solid color-mix(in srgb, var(--banner-color, #00ff88) 28%, transparent);
+  border-radius: 0.65rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--banner-bg, #0a0a0f) 88%, transparent);
+}
+
+.led-presets summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0.75rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.led-presets summary::-webkit-details-marker {
+  display: none;
+}
+
+.led-presets summary::after {
+  content: "▸";
+  opacity: 0.65;
+  transition: transform 0.2s ease;
+}
+
+.led-presets[open] summary::after {
+  transform: rotate(90deg);
+}
+
+.led-presets-list {
+  margin: 0;
+  padding: 0 0.5rem 0.65rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: min(40dvh, 240px);
+  overflow-y: auto;
+}
+
+.led-preset-btn {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.65rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--banner-color, #00ff88) 22%, transparent);
+  background: color-mix(in srgb, var(--banner-bg, #0a0a0f) 92%, #fff 1%);
+  color: color-mix(in srgb, var(--banner-color, #00ff88) 92%, #fff);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  line-height: 1.35;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.led-preset-btn:active {
+  transform: scale(0.99);
+}
+
+.led-preset-btn small {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.led-root[data-immersive="true"] {
+  z-index: 2147483000;
+}
+
+.led-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.led-label-row label {
+  margin: 0;
+}
+
+.led-fs-exit {
+  position: fixed;
+  top: calc(0.45rem + env(safe-area-inset-top));
+  right: calc(0.45rem + env(safe-area-inset-right));
+  z-index: 2147483647;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--banner-color, #00ff88) 45%, transparent);
+  background: color-mix(in srgb, var(--banner-bg, #0a0a0f) 88%, #fff 3%);
+  color: var(--banner-color, #00ff88);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.led-fs-exit:active {
+  transform: scale(0.96);
 }

@@ -27,6 +27,18 @@ function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
+export function fontSizeCssFromVw(vw: number): string {
+  const s = clamp(vw, 4, 28);
+  return `clamp(${Math.max(0.8, s * 0.35)}rem, ${s}vw, ${clamp(s * 1.2, 2, 8)}rem)`;
+}
+
+export function parseVwFromFontSize(fontSize: string, fallback: number): number {
+  const m = fontSize.match(/(\d+(?:\.\d+)?)vw/);
+  if (!m) return fallback;
+  const v = parseFloat(m[1]);
+  return Number.isNaN(v) ? fallback : v;
+}
+
 export function parseBannerParams(
   searchParams: URLSearchParams,
 ): BannerParams {
@@ -57,7 +69,7 @@ export function parseBannerParams(
   if (sizeRaw !== null) {
     const s = parseFloat(sizeRaw.replace(",", "."));
     if (!Number.isNaN(s) && s > 0) {
-      fontSize = `clamp(${Math.max(0.8, s * 0.35)}rem, ${clamp(s, 4, 28)}vw, ${clamp(s * 1.2, 2, 8)}rem)`;
+      fontSize = fontSizeCssFromVw(s);
     }
   }
 

@@ -1,13 +1,23 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  fontSizeCssFromVw,
   parseBannerParams,
+  parseVwFromFontSize,
   paramsToQueryString,
   type BannerParams,
 } from "@/lib/banner-params";
+import { SWEDEN_PRESETS } from "@/lib/sweden-presets";
 
 function useMediaQuery(query: string): boolean {
   const subscribe = useCallback(
@@ -35,9 +45,12 @@ export default function LedBannerApp() {
     [searchParams],
   );
 
+  const rootRef = useRef<HTMLDivElement>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [draft, setDraft] = useState<BannerParams>(fromUrl);
   const [toast, setToast] = useState<string | null>(null);
+  const [immersive, setImmersive] = useState(false);
+  const [nativeFs, setNativeFs] = useState(false);
 
   const isCoarse = useMediaQuery("(pointer: coarse)");
 
@@ -46,12 +59,31 @@ export default function LedBannerApp() {
     window.setTimeout(() => setToast(null), 2000);
   }, []);
 
+  useEffect(() => {
+    const sync = () => {
+      setNativeFs(document.fullscreenElement === rootRef.current);
+    };
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+
   const applyDraftToUrl = useCallback(() => {
     const qs = paramsToQueryString(draft);
     router.replace(`${pathname}?${qs}`);
     setPanelOpen(false);
     showToast("Appliqué");
   }, [draft, pathname, router, showToast]);
+
+  const applyPreset = useCallback(
+    (bannerText: string) => {
+      const next: BannerParams = { ...fromUrl, text: bannerText };
+      router.replace(`${pathname}?${paramsToQueryString(next)}`);
+      setDraft(next);
+      setPanelOpen(false);
+      showToast("Preset appliqué");
+    },
+    [fromUrl, pathname, router, showToast],
+  );
 
   const copyLink = useCallback(async () => {
     const qs = paramsToQueryString(fromUrl);
@@ -82,12 +114,53 @@ export default function LedBannerApp() {
     setPanelOpen(true);
   }, [fromUrl]);
 
+  const toggleFullscreen = useCallback(async () => {
+    if (immersive) {
+      setImmersive(false);
+      return;
+    }
+    const el = rootRef.current;
+    if (!el) return;
+
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
+
+    try {
+      await el.requestFullscreen();
+    } catch {
+      setImmersive(true);
+      showToast("Mode immersif");
+    }
+  }, [immersive, showToast]);
+
+  const exitAllFullscreen = useCallback(async () => {
+    setImmersive(false);
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  const inExpandedView = nativeFs || immersive;
   const displayText = `${fromUrl.text}   •   `;
+  const speedSlider = draft.speedSec;
+  const sizeVw = parseVwFromFontSize(draft.fontSize, 11);
 
   return (
     <>
       <div
+        ref={rootRef}
         className="led-root"
+        data-immersive={immersive ? "true" : undefined}
         style={
           {
             "--banner-color": fromUrl.color,
@@ -110,6 +183,9 @@ export default function LedBannerApp() {
         </div>
 
         <div className="led-controls">
+          <button type="button" className="led-btn" onClick={toggleFullscreen}>
+            {inExpandedView ? "Quitter plein écran" : "Plein écran"}
+          </button>
           <button type="button" className="led-btn" onClick={copyLink}>
             Partager / copier
           </button>
@@ -128,6 +204,23 @@ export default function LedBannerApp() {
 
       <aside className="led-panel" data-open={panelOpen} role="dialog">
         <h2>Paramètres</h2>
+
+        <details className="led-presets">
+          <summary>Presets · Suède</summary>
+          <ul className="led-presets-list">
+            {SWEDEN_PRESETS.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  className="led-preset-btn"
+                  onClick={() => applyPreset(p.bannerText)}
+                >
+                  {p.labelFr}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
 
         <div className="led-field">
           <label htmlFor="led-text">Texte</label>
@@ -165,62 +258,66 @@ export default function LedBannerApp() {
           </div>
         </div>
 
-        <div className="led-row">
-          <div className="led-field">
-            <label htmlFor="led-speed">Vitesse (s)</label>
-            <input
-              id="led-speed"
-              type="number"
-              min={2}
-              max={120}
-              step={1}
-              value={draft.speedSec}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                if (!Number.isNaN(v))
-                  setDraft((d) => ({
-                    ...d,
-                    speedSec: Math.min(120, Math.max(2, v)),
-                  }));
-              }}
-            />
+        <div className="led-field">
+          <div className="led-label-row">
+            <label htmlFor="led-speed">Vitesse du défilement</label>
+            <span className="led-range-value">{speedSlider} s</span>
           </div>
-          <div className="led-field">
-            <label htmlFor="led-dir">Sens</label>
-            <select
-              id="led-dir"
-              value={draft.direction}
-              onChange={(e) =>
+          <input
+            id="led-speed"
+            type="range"
+            className="led-range"
+            min={2}
+            max={120}
+            step={1}
+            value={speedSlider}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              if (!Number.isNaN(v))
                 setDraft((d) => ({
                   ...d,
-                  direction: e.target.value as "left" | "right",
-                }))
-              }
-              className="led-select"
-            >
-              <option value="left">Gauche</option>
-              <option value="right">Droite</option>
-            </select>
-          </div>
+                  speedSec: Math.min(120, Math.max(2, v)),
+                }));
+            }}
+          />
         </div>
 
         <div className="led-field">
-          <label htmlFor="led-size">Taille (vw, ~4–20)</label>
+          <label htmlFor="led-dir">Sens</label>
+          <select
+            id="led-dir"
+            value={draft.direction}
+            onChange={(e) =>
+              setDraft((d) => ({
+                ...d,
+                direction: e.target.value as "left" | "right",
+              }))
+            }
+            className="led-select"
+          >
+            <option value="left">Gauche</option>
+            <option value="right">Droite</option>
+          </select>
+        </div>
+
+        <div className="led-field">
+          <div className="led-label-row">
+            <label htmlFor="led-size">Taille du texte</label>
+            <span className="led-range-value">{Math.round(sizeVw)} vw</span>
+          </div>
           <input
             id="led-size"
             type="range"
+            className="led-range"
             min={4}
             max={22}
             step={1}
-            value={
-              parseFloat(draft.fontSize.match(/(\d+(?:\.\d+)?)vw/)?.[1] ?? "11") ||
-              11
-            }
+            value={Math.round(sizeVw)}
             onChange={(e) => {
               const s = parseFloat(e.target.value);
               setDraft((d) => ({
                 ...d,
-                fontSize: `clamp(${Math.max(0.8, s * 0.35)}rem, ${s}vw, ${Math.min(8, s * 1.2)}rem)`,
+                fontSize: fontSizeCssFromVw(s),
               }));
             }}
           />
@@ -230,6 +327,17 @@ export default function LedBannerApp() {
           Appliquer à l’URL
         </button>
       </aside>
+
+      {inExpandedView ? (
+        <button
+          type="button"
+          className="led-fs-exit"
+          onClick={exitAllFullscreen}
+          aria-label="Quitter le plein écran"
+        >
+          ✕
+        </button>
+      ) : null}
 
       <div className="led-toast" data-visible={toast !== null} role="status">
         {toast}
