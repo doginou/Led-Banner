@@ -42,6 +42,11 @@ export const SWEDEN_PRESETS: SwedenPreset[] = [
     bannerText: "Mitt hjärta slår för dig",
   },
   {
+    id: "kar",
+    labelFr: "Je suis amoureux de toi",
+    bannerText: "Jag är kär i dig",
+  },
+  {
     id: "kom",
     labelFr: "Viens avec moi",
     bannerText: "Kom med mig",

@@ -11,6 +11,10 @@ export type BannerParams = {
   fontSize: string;
 };
 
+/** Défauts (sans paramètres d’URL) : défilement plus vif, texte plus grand. */
+export const DEFAULT_SPEED_SEC = 8;
+export const DEFAULT_SIZE_VW = 16;
+
 function normalizeHex(input: string | null, fallback: string): string {
   if (!input || !input.trim()) return fallback;
   const t = input.trim();
@@ -55,7 +59,7 @@ export function parseBannerParams(
   const background = normalizeHex(searchParams.get("bg"), "#0a0a0f");
 
   const speedRaw = searchParams.get("speed");
-  let speedSec = 18;
+  let speedSec = DEFAULT_SPEED_SEC;
   if (speedRaw !== null) {
     const p = parseFloat(speedRaw.replace(",", "."));
     if (!Number.isNaN(p)) speedSec = clamp(p, 2, 120);
@@ -65,7 +69,7 @@ export function parseBannerParams(
   const direction: BannerDirection = dirRaw === "right" ? "right" : "left";
 
   const sizeRaw = searchParams.get("size");
-  let fontSize = "clamp(1.75rem, 11vw, 4.5rem)";
+  let fontSize = fontSizeCssFromVw(DEFAULT_SIZE_VW);
   if (sizeRaw !== null) {
     const s = parseFloat(sizeRaw.replace(",", "."));
     if (!Number.isNaN(s) && s > 0) {

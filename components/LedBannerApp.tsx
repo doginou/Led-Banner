@@ -12,6 +12,7 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  DEFAULT_SIZE_VW,
   fontSizeCssFromVw,
   parseBannerParams,
   parseVwFromFontSize,
@@ -178,7 +179,7 @@ export default function LedBannerApp() {
     return () => ro.disconnect();
   }, [displayText, fromUrl.fontSize]);
   const speedSlider = draft.speedSec;
-  const sizeVw = parseVwFromFontSize(draft.fontSize, 11);
+  const sizeVw = parseVwFromFontSize(draft.fontSize, DEFAULT_SIZE_VW);
 
   return (
     <>

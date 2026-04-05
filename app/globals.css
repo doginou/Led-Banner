@@ -105,7 +105,7 @@ body {
 }
 
 .led-track-animated {
-  animation: led-marquee var(--led-duration, 18s) linear infinite;
+  animation: led-marquee var(--led-duration, 10s) linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
