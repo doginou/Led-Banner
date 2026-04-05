@@ -57,6 +57,9 @@ export default function LedBannerApp() {
   const [nativeFs, setNativeFs] = useState(false);
 
   const isCoarse = useMediaQuery("(pointer: coarse)");
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+
+  const loopWidthRef = useRef(0);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -158,26 +161,74 @@ export default function LedBannerApp() {
   const displayText = `${fromUrl.text}   •   `;
 
   useLayoutEffect(() => {
-    const track = trackRef.current;
-    const seg = segmentRef.current;
-    if (!track || !seg) return;
+    const seg1 = segmentRef.current;
+    if (!seg1) return;
+    const seg2 = seg1.nextElementSibling as HTMLElement | null;
+    if (!seg2) return;
 
-    const syncShift = () => {
-      const w = seg.getBoundingClientRect().width;
-      if (w > 0) track.style.setProperty("--led-marquee-shift", `-${w}px`);
+    const measure = () => {
+      const r1 = seg1.getBoundingClientRect();
+      const r2 = seg2.getBoundingClientRect();
+      const w = r2.left - r1.left;
+      if (w > 0.5) loopWidthRef.current = w;
     };
 
-    syncShift();
+    measure();
 
-    const ro = new ResizeObserver(syncShift);
-    ro.observe(seg);
+    const ro = new ResizeObserver(measure);
+    ro.observe(seg1);
+    ro.observe(seg2);
 
     if (typeof document !== "undefined" && document.fonts?.ready) {
-      void document.fonts.ready.then(syncShift);
+      void document.fonts.ready.then(measure);
     }
 
     return () => ro.disconnect();
   }, [displayText, fromUrl.fontSize]);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    if (reduceMotion) {
+      track.style.transform = "";
+      return;
+    }
+
+    let rafId = 0;
+    let stopped = false;
+    const speedMs = fromUrl.speedSec * 1000;
+    const start = performance.now();
+    const forward = fromUrl.direction === "left";
+
+    const tick = (now: number) => {
+      if (stopped) return;
+      const w = loopWidthRef.current;
+      if (w <= 0) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+      const elapsed = now - start;
+      const t = (elapsed % speedMs) / speedMs;
+      const x = forward ? -t * w : -(1 - t) * w;
+      track.style.transform = `translate3d(${x}px, 0, 0.01px)`;
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(rafId);
+      track.style.transform = "";
+    };
+  }, [
+    reduceMotion,
+    fromUrl.speedSec,
+    fromUrl.direction,
+    displayText,
+    fromUrl.fontSize,
+  ]);
   const speedSlider = draft.speedSec;
   const sizeVw = parseVwFromFontSize(draft.fontSize, DEFAULT_SIZE_VW);
 
@@ -191,14 +242,13 @@ export default function LedBannerApp() {
           {
             "--banner-color": fromUrl.color,
             "--banner-bg": fromUrl.background,
-            "--led-duration": `${fromUrl.speedSec}s`,
           } as CSSProperties
         }
       >
         <div className="led-stage">
           <div
             ref={trackRef}
-            className="led-track led-track-animated"
+            className="led-track"
             data-direction={fromUrl.direction}
             style={{ fontSize: fromUrl.fontSize }}
           >

@@ -69,10 +69,6 @@ body {
   backface-visibility: hidden;
 }
 
-.led-track[data-direction="right"] {
-  animation-direction: reverse;
-}
-
 .led-chunk {
   display: flex;
   align-items: center;
@@ -94,25 +90,7 @@ body {
     0 0 0.45em color-mix(in srgb, currentColor 45%, transparent);
 }
 
-@keyframes led-marquee {
-  from {
-    transform: translate3d(0, 0, 0.01px);
-  }
-  to {
-    /* Défini en JS (--led-marquee-shift) pour éviter les sauts d’arrondi ; repli -50% */
-    transform: translate3d(var(--led-marquee-shift, -50%), 0, 0.01px);
-  }
-}
-
-.led-track-animated {
-  animation: led-marquee var(--led-duration, 10s) linear infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .led-track-animated {
-    animation: none;
-  }
-
   .led-stage {
     justify-content: center;
   }

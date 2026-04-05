@@ -12,7 +12,7 @@ export type BannerParams = {
 };
 
 /** Défauts (sans paramètres d’URL) : défilement plus vif, texte plus grand. */
-export const DEFAULT_SPEED_SEC = 8;
+export const DEFAULT_SPEED_SEC = 10;
 export const DEFAULT_SIZE_VW = 16;
 
 function normalizeHex(input: string | null, fallback: string): string {
